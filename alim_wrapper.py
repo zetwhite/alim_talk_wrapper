@@ -19,16 +19,19 @@ class ResponseError(Exception) :
         
 
 def initSetting(apiKey, senderKey, userId) : 
+    #setting apiKey, senderKey, userId for basic auth infomation 
     basicSetting['apikey'] = apiKey 
     basicSetting['senderkey'] = senderKey
     basicSetting['userid'] = userId
 
 
 def tokenSetting(token) : 
+    #setting token for using API 
     basicSetting['token'] = token
      
 
 def sendRequest(url, data={}) :  
+    #send request to url and data as json format 
     res = requests.post(url, data = {**basicSetting, **data} ) 
     response = res.json()
     if(response['code'] != 0) : 
@@ -36,19 +39,9 @@ def sendRequest(url, data={}) :
     return response
 
 
-'''
-def logging(func) : 
-    def new_function(*args, **kwargs) : 
-        log() 
-        result = func(*args, **kwargs)
-        pp = pprint.PrettyPrinter(indent = 2)
-        pp.pprint(result) 
-        return result 
-    return new_function
-'''
-
-
 def getToken(time) : 
+    #get token from API server
+    #time : token validation duration (minutes) 
     url = host + "/akv10/token/create/" + str(time) + "/i/" 
     result = sendRequest(url)
     if(debug) : 
@@ -57,12 +50,9 @@ def getToken(time) :
     return result["token"]
 
 
-def authChannel(plusId, phoneNumber) : 
+def authChannel(plusid, phonenumber) : 
+    data = locals()
     url = host + "/akv10/profile/auth/" 
-    data = {
-        "plusid" : plusId, 
-        "phonenumber" : phoneNumber
-    }
     result = sendRequest(url, data)
     if(debug) : 
         log()
@@ -75,14 +65,43 @@ def getCategory() :
     if(debug) : 
         log()
         printer.pprint(result)
+    return result["data"]
 
 
-def listTemplates() : 
-    url = host + "/akv10/template/list/"
-    result = sendRequest(url)
+def addFriendChannel(plusid, authnum, phonenumber, categorycode) : 
+    data = locals() 
+    url = host + "/akv10/profile/add/"
+    result = sendRequest(url, data)
+    if(debug) : 
+        log() 
+        print.pprint(result)
+
+
+def listChannel(plusid = None, senderkey = None) : 
+    data = locals()
+    for i in list(data) : 
+        if(data[i] is None) : 
+            del(data[i])
+    url = host + "/akv10/profile/list/"
+    result = sendRequest(url, data)
     if(debug) : 
         log() 
         printer.pprint(result)
+    return result["list"]
+
+
+def listTemplates(tpl_code = None) : 
+    data = locals() 
+    for i in list(data) : 
+        if(data[i] is None) : 
+            del(data[i])
+    url = host + "/akv10/template/list/"
+    result = sendRequest(url, data)
+    if(debug) : 
+        log() 
+        printer.pprint(result)
+    return result["list"]
+
 
 def listHistory(page = 1, limit = 50) : 
     url = host + "/akv10/history/list/"
@@ -102,5 +121,7 @@ if __name__ == '__main__' :
 
     #authChannel("@neo_2020", "01083118428")
     #getCategory()
-    listTemplates()
-    listHistory() 
+    #listTemplates()
+    #istHistory() 
+    #listChannel()
+    #print(listTemplates())
