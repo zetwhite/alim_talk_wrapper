@@ -1,14 +1,13 @@
 import requests 
 import json
-import user_config
 import inspect
-import pprint
 
 basicSetting = {}
 host = "https://kakaoapi.aligo.in" 
 debug = True
-log = lambda: print("[", inspect.stack()[1][3], "]")
-printer = pprint.PrettyPrinter(indent = 2)
+printFunc = lambda: print("[", inspect.stack()[1][3], "]")
+printLog = lambda log: print(json.dumps(log, indent = 2, ensure_ascii=False))
+
 
 class ResponseError(Exception) : 
     def __init__(self, code, msg) :
@@ -19,19 +18,29 @@ class ResponseError(Exception) :
         
 
 def initSetting(apiKey, senderKey, userId) : 
-    #setting apiKey, senderKey, userId for basic auth infomation 
+    """Initialize basic settings; this settings are used for all request
+
+    Args : 
+        apiKey(string) : apiKey for using kakao alim talk service (need to get from smart aligo homepage)
+        senderKey(string) : senderKey for check sender Info (need to get from smart aligo homepage)
+        userId(string) : smart aligo user id 
+    """
     basicSetting['apikey'] = apiKey 
     basicSetting['senderkey'] = senderKey
     basicSetting['userid'] = userId
 
 
 def tokenSetting(token) : 
-    #setting token for using API 
+    """Initialize token value; token is used for all request
+
+    Args :
+        token(string) : token string, get from getToken function
+    """
     basicSetting['token'] = token
      
 
-def sendRequest(url, data={}) :  
-    #send request to url and data as json format 
+def sendRequest(url, data={}) :
+    #send data as json fomat to url, and return result as dict
     res = requests.post(url, data = {**basicSetting, **data} ) 
     response = res.json()
     if(response['code'] != 0) : 
@@ -45,8 +54,8 @@ def getToken(time) :
     url = host + "/akv10/token/create/" + str(time) + "/i/" 
     result = sendRequest(url)
     if(debug) : 
-        log()
-        printer.pprint(result)
+        printFunc()
+        printLog(result)
     return result["token"]
 
 
@@ -55,16 +64,16 @@ def authChannel(plusid, phonenumber) :
     url = host + "/akv10/profile/auth/" 
     result = sendRequest(url, data)
     if(debug) : 
-        log()
-        printer.pprint(result)
+        printFunc()
+        printLog(result)
 
 
 def getCategory() : 
     url = host + "/akv10/category/"
     result = sendRequest(url)
     if(debug) : 
-        log()
-        printer.pprint(result)
+        printFunc()
+        printLog(result)
     return result["data"]
 
 
@@ -73,8 +82,9 @@ def addFriendChannel(plusid, authnum, phonenumber, categorycode) :
     url = host + "/akv10/profile/add/"
     result = sendRequest(url, data)
     if(debug) : 
-        log() 
-        print.pprint(result)
+        printFunc()
+        printLog(result)
+    return result["data"]
 
 
 def listChannel(plusid = None, senderkey = None) : 
@@ -85,12 +95,20 @@ def listChannel(plusid = None, senderkey = None) :
     url = host + "/akv10/profile/list/"
     result = sendRequest(url, data)
     if(debug) : 
-        log() 
-        printer.pprint(result)
+        printFunc()
+        printLog(result)
     return result["list"]
 
 
 def listTemplates(tpl_code = None) : 
+    """ get Lists of all template 
+
+    Args :
+        tpl_code(string) : if not None, print a template which has this tpl_code
+    
+    Returns : 
+        list : return list of dict for template info   
+    """
     data = locals() 
     for i in list(data) : 
         if(data[i] is None) : 
@@ -98,30 +116,66 @@ def listTemplates(tpl_code = None) :
     url = host + "/akv10/template/list/"
     result = sendRequest(url, data)
     if(debug) : 
-        log() 
-        printer.pprint(result)
+        printFunc() 
+        printLog(result)
     return result["list"]
 
 
-def listHistory(page = 1, limit = 50) : 
+def listHistory(page = 1, limit = 50, startdate = None, enddate = None) :
+    data = locals()  
+    for i in list(data) :
+        if(data[i] is None) :
+            del(data[i])
     url = host + "/akv10/history/list/"
-    data = {
-        "page" : page, 
-        "limit" : limit, 
-    }
     result = sendRequest(url, data)
     if(debug) : 
-        log() 
-        printer.pprint(result)
+        printFunc()
+        printLog(result)
+    return result["list"], result["currentPage"], result["totalPage"], result["totalCount"]
 
 
-if __name__ == '__main__' : 
-    initSetting(user_config.apiKey, user_config.senderKey, user_config.userId)
-    tokenSetting(getToken(1))
+def getSendInfo(sender, receiver_1, senddate = None, recvname_1 = None) :
+    '''make sendInfo dictionary form 
 
-    #authChannel("@neo_2020", "01083118428")
-    #getCategory()
-    #listTemplates()
-    #istHistory() 
-    #listChannel()
-    #print(listTemplates())
+    Args :
+        sender(string) : sender phone number(010XXXXXXX)
+        senddate(string) : reservation time (YYYYMMDDHHMMSS), if None send right now!
+
+    Returns :
+        dict : return sendInfo in dictionary form 
+    '''
+    data = locals() 
+    for i in list(data) :
+        if(data[i] is None) : 
+            del(data[i])
+    return data
+
+
+def getTplContent(template) :
+    data = {} 
+    data["tpl_code"] = template["templtCode"]
+    data["subject_1"] = template["templtName"]
+    data["message_1"] = template["templtContent"]
+    data["button_1"] = template["buttons"]
+    return data
+
+
+def getFailContent(template, failover = "N"):
+    data = {}
+    data["failover"] = failover 
+    if(failover == "N") :
+        return data
+    data["fsubject_1"] = template["templtName"]
+    data["fmessage_1"] = template["templtContent"] 
+    return data
+
+
+def sendAlimTalk( sendInfo, tplContent, failContent ) :
+    data = {**sendInfo, **tplContent, **failContent}
+    print(data)
+    url = host + "/akv10/alimtalk/send/"
+    result = sendRequest(url, data) 
+    if(debug) :
+        printFunc() 
+        printLog(result)
+    return result["info"]

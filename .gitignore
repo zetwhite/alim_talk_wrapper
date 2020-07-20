@@ -1,6 +1,7 @@
 .vscode/
 venv/
-user_config.py
+admin_config.py
+Template/
 
 *.pyc/
 __pycache__/
