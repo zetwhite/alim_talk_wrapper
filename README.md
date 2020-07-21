@@ -1,3 +1,34 @@
+
+# alim_talk_wrapper
+https://smartsms.aligo.in/main.html<br />
+aligo kakao alimtalk API wrapper<br />
+<br />
+test.py와 같이 template을 받아와서 .json파일을 받아와서 저장하고,<br />
+template에서부터 메세지를 생성해서 알림톡을 보낼 수 있습니다.<br />
+<br />
+<br />
+# alim_wrapper.py
+알리고에서 제공하는 API의 파이썬 래퍼를 제공합니다.<br />
+해당 함수들을 이용하기 전에 <br />
+```python
+    initSetting(apiKey, senderKey, userId)
+    tokenSetting(alim.getToken(1))
+```
+위와 같은 함수들을 호출하여 기본적인 인증을 위한 값을 세팅해야합니다.<br />
+<br />
+<br />
+# template_manager.py 
+템플릿을 `./Template/[templatecode].json` 파일로 저장합니다. <br />
+`#{변수}`를 찾아내어 `./Template/[templatecode]_vlist.json` 파일로 저장합니다.<br />
+.json으로 저장된 template을 dictionary로 읽어옵니다. <br /> 
+이후 해당 변수(`#{변수}`)들을 다른 값으로 수정합니다. <br />
+<br />
+<br />
+
+
+--------------------------------------------------------------------------------------
+# NOTE 
+
 ## template_manager.py for template saving and loading 
 * [save] template list를 받아와서 json파일로 저장 (o)
 * [save] template에서 사용하는 변수들 re 이용해서 txt로 저장 (vlist.txt) (o)
